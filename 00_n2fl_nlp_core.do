@@ -55,11 +55,16 @@
 	//Local run-switches for analytic code
 		local switch_aggregation = 0
 		local switch_advisor_flagging = 0
+		local switch_validation_set_generator = 0
+		local switch_validation_set_analysis = 0
+		local switch_validation_set_algocompare = 0
 		local switch_process_analytic_data = 0
 		local switch_conversation_metrics = 0
 		local switch_topic_model_training = 0
 		local switch_topic_modeling = 0
 		local switch_analytic_data_final = 0
+		local switch_message_coding = 0
+		local switch_design_analysis = 0
 		local switch_tables_figures = 0
 		
 	
@@ -80,6 +85,18 @@ if `switch_advisor_flagging' == 1 {
 
 	//SENTIMENT ANALYSIS SCRIPTS ARE TO BE RUN HERE (03x scripts)
 
+if `switch_validation_set_generator' == 1 {
+	rscript using "${scripts}/03d_validation_set_generator.R"
+}
+
+if `switch_validation_set_analysis' == 1 {
+	rscript using "${scripts}/03e_validation_set_analysis.R"
+}
+
+if `switch_validation_set_algocompare' == 1 {
+	rscript using "${scripts}/03f_validation_set_algocompare.R"
+}
+
 if `switch_process_analytic_data' == 1 {
 	do "${scripts}/04_process_analytic_data.do"
 }
@@ -98,6 +115,14 @@ if `switch_topic_modeling' == 1 {
 
 if `switch_analytic_data_final' == 1 {
 	do "${scripts}/06_analytic_data_final.do"
+}
+
+if `switch_message_coding' == 1 {
+	do "${scripts}/06b_message_coding.do"
+}
+
+if `switch_design_analysis' == 1 {
+	do "${scripts}/06c_design_outcomes_analysis.do"
 }
 
 if `switch_tables_figures' == 1 {
