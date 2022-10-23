@@ -16,7 +16,7 @@
 rm(list = ls())
 
 pacman::p_load(tidyverse, tidylog, haven, lubridate, furrr, ggthemes, 
-               ggridges, corrplot, Hmisc, xlsx, kableExtra, fixest)
+               ggridges, corrplot, xlsx, kableExtra, fixest)
 
 username <- Sys.getenv("USERNAME")
 home <- Sys.getenv("HOME")
@@ -35,6 +35,9 @@ project_output <- file.path(root, 'output')
 ################################################################################
 
 ## Load in the data
+scheduled_data <- read_dta(file.path(project_data, 'messages_received_collapsed.dta')) %>%
+  select(supertopic_bookend, supertopic_registration, supertopic_financial, supertopic_academic)
+
 data <- read_dta(file.path(project_data, '06_analysis_sample.dta')) 
 
 
@@ -43,9 +46,6 @@ data <- read_dta(file.path(project_data, '06_analysis_sample.dta'))
 #   #visualize - Make a nice output table for descriptives
 #
 ################################################################################
-
-# Detach this package temporarily to avoid function conflicts
-detach("package:Hmisc", unload = TRUE)
 
 # get a list of demographic variables together for the table
 demoslist <- c("student_id", "age_entry", "male", "white", "afam", "hisp", "other", "race_missing",
@@ -195,6 +195,41 @@ for(i in names(densitydata)) {
   j <- j + 1
 }
 
+# Loop over the density plots for each scheduled message code variable
+scheduled_labels <- c("% of Received Scheduled Messages: Bookend",
+                      "% of Received Scheduled Messages: Registration",
+                      "% of Received Scheduled Messages: Financial Matters",
+                      "% of Received Scheduled Messages: Academic Supports")
+
+j <- 1
+for(i in names(scheduled_data)) {
+  nsize <- scheduled_data %>%
+    filter(!is.na(.[[i]])) %>%
+    nrow()
+  median <- scheduled_data %>%
+    filter(!is.na(.[[i]])) %>%
+    .[[i]] %>%
+    median() %>%
+    round(digits=2)
+  mean <- scheduled_data %>%
+    filter(!is.na(.[[i]])) %>%
+    .[[i]] %>%
+    mean() %>%
+    round(digits=2)
+  scheduled_data %>%
+    ggplot(aes(x=.data[[i]])) +
+    geom_density(adjust=1/2) +
+    labs(x=scheduled_labels[j], y="Density\n", title=paste0("Distribution of ", scheduled_labels[j]),
+         subtitle=paste0(" (N = ", nsize, ") (Mean = ", mean, ") (Median = ", median, ")")) + 
+    geom_vline(xintercept=median) + 
+    geom_vline(xintercept=mean, linetype="dashed") + 
+    theme_minimal(base_size=20)
+  
+  ggsave(filename=file.path(project_output, paste0("99_tables_scheduled_", j, "_", i, ".png")), width=12, height=4, dpi=500, bg="white")
+  
+  j <- j + 1
+}
+
 # Make another scatterplot for the engagement and disengagement variables
 set.seed(1234)
 densitydata %>%
@@ -206,7 +241,7 @@ densitydata %>%
 ggsave(filename=file.path(project_output, paste0("99_engagement_disengagement_scatter_scheduled.png")), width=12, height=8, dpi=500, bg="white")
 
 # Load Hmisc again to run the correlation matrices
-library(Hmisc)
+pacman::p_load(Hmisc)
 
 # Get the data in the format for the correlation matrices
 corrdata <- data %>%
